@@ -430,6 +430,7 @@ sub deploy_mapping {
 
     # recreate the indices and apply the mapping
 
+    $self->_delete_index('cpan');
     for my $idx ( sort keys %mappings ) {
         $self->_delete_index($idx) if $es->indices->exists( index => $idx );
 
@@ -438,20 +439,31 @@ sub deploy_mapping {
 
         for my $type ( sort keys %{ $mappings{$idx} } ) {
             log_info {"Adding mapping: $idx/$type"};
-            $es->indices->put_mapping(
-                index => $idx,
-                type  => $type,
-                body  => { $type => $mappings{$idx}{$type} },
-            );
+            eval {
+                $es->indices->put_mapping(
+                    index => $idx,
+                    type  => $type,
+                    body  => { $type => $mappings{$idx}{$type} },
+                );
+                1
+            } or do {
+                warn "Failed to put $idx $type mapping, because $@"
+            }
         }
     }
 
     # create alias
 
-    $es->indices->put_alias(
-        index => $cpan_index,
-        name  => 'cpan',
-    );
+    eval {
+        warn "map for $cpan_index";
+        $es->indices->put_alias(
+            index => $cpan_index,
+            name  => 'cpan',
+        );
+        1
+    } or do {
+        warn "failed to set $cpan_index map due to $@";
+    };
 
     # done
     log_info {"Done."};
