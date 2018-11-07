@@ -184,6 +184,7 @@ sub run {
         type  => 'file'
     );
 
+    keys %upgrade;
     while ( my ( $dist, $file_data ) = each %upgrade ) {
 
         # Don't reindex if already marked as latest.
@@ -193,6 +194,7 @@ sub run {
         $self->reindex( $bulk, $file_data, 'latest' );
     }
 
+    keys %downgrade;
     while ( my ( $release, $file_data ) = each %downgrade ) {
 
         # Don't downgrade if this release version is also marked as latest.
